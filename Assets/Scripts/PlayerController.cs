@@ -5,12 +5,14 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    [SerializeField] private Collider2D _collider2D;
+    [SerializeField] private Collider2D groundCollider2D;
+    [SerializeField] private Collider2D wallCollider2D;
     private Rigidbody2D _rigidbody2D;
     private Animator _animator;
     private SpriteRenderer _spriteRenderer;
 
     public LayerMask ground;
+    public float speed;
     
     // Start is called before the first frame update
     void Start()
@@ -23,29 +25,58 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        var onTheGround = groundCollider2D.IsTouchingLayers(ground);
+
         float hDirection = Input.GetAxis("Horizontal");
 
         if (hDirection < 0.0f)
         {
-            _rigidbody2D.velocity = new Vector2(-5, _rigidbody2D.velocity.y);
+            if (onTheGround)
+            {
+                _rigidbody2D.velocity = new Vector2(-speed, _rigidbody2D.velocity.y);
+                _animator.SetBool("running", true);
+            }
+            else
+            {
+                _animator.SetBool("running", false);
+            }
+
             _spriteRenderer.flipX = true;
-            _animator.SetBool("running", true);
-        } 
+        }
         else if (hDirection > 0.0f)
         {
-            _rigidbody2D.velocity = new Vector2(5, _rigidbody2D.velocity.y);
+            if (onTheGround)
+            {
+                _rigidbody2D.velocity = new Vector2(speed, _rigidbody2D.velocity.y);
+                _animator.SetBool("running", true);
+            }
+            else
+            {
+                _animator.SetBool("running", false);
+            }
+
             _spriteRenderer.flipX = false;
-            _animator.SetBool("running", true);
         }
         else
         {
-            _rigidbody2D.velocity = new Vector2(0, _rigidbody2D.velocity.y);
             _animator.SetBool("running", false);
         }
 
-        if (Input.GetKeyDown(KeyCode.Space) && _collider2D.IsTouchingLayers(ground))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            _rigidbody2D.velocity = new Vector2(_rigidbody2D.velocity.x, 5);
+            if (onTheGround)
+            {
+                _animator.SetBool("running", false);
+                _animator.SetTrigger("jump");
+                _rigidbody2D.velocity = new Vector2(_rigidbody2D.velocity.x, speed);
+            }
+            else if (wallCollider2D.IsTouchingLayers(ground))
+            {
+                _animator.SetTrigger("jump");
+                var flipX = _spriteRenderer.flipX;
+                _rigidbody2D.velocity = new Vector2(flipX ? speed : -speed, speed);
+                _spriteRenderer.flipX = !flipX;
+            }
         }
     }
 
@@ -53,16 +84,9 @@ public class PlayerController : MonoBehaviour
     {
         if (other.CompareTag("Bonus"))
         {
-            // LayerMask.NameToLayer("Default") = 0
-            // LayerMask.GetMask("Default") = 1             // 000000001   // (1 << index)
-
-            // LayerMask.NameToLayer("TransparentFX") = 1
-            // LayerMask.GetMask("TransparentFX") = 2       // 000000010   // (1 << index)
-
             int layer = LayerMask.NameToLayer("Player");
             int mask = Physics2D.GetLayerCollisionMask(layer);
             mask |= LayerMask.GetMask("Crate");
-            // mask &= ~LayerMask.GetMask("Crate");   // remove bit
             Physics2D.SetLayerCollisionMask(layer, mask);
 
             Destroy(other.gameObject);
