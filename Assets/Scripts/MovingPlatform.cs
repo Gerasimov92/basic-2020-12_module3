@@ -4,30 +4,52 @@ using UnityEngine;
 
 public class MovingPlatform : MonoBehaviour
 {
-    public Transform top;
-    public Transform bottom;
+    public List<Transform> points;
     public float speed;
 
-    private float current;  // от 0 до 1
+    private int srcPoint;
+    private int dstPoint;
+    private float currentPos;  // РѕС‚ 0 РґРѕ 1
     private float dir;
 
     void Start()
     {
-        current = 0.0f;
+        srcPoint = 0;
+        dstPoint = 1;
+        currentPos = 0.0f;
         dir = 1.0f;
     }
 
     void Update()
     {
-        current += dir * speed * Time.deltaTime;
-        if (current > 1.0f) {
-            current = 1.0f;
-            dir = -1.0f;
-        } else if (current < 0.0f) {
-            current = 0.0f;
-            dir = 1.0f;
-        }
+        if (points.Count < 2)
+            return;
 
-        transform.position = Vector3.Lerp(top.position, bottom.position, current);
+        var inPos = Move(points[srcPoint], points[dstPoint]);
+        if (inPos)
+        {
+            currentPos = 0.0f;
+            if (dstPoint == 0 || dstPoint == points.Count - 1)
+            {
+                dir = -dir;
+                var temp = dstPoint;
+                dstPoint = srcPoint;
+                srcPoint = temp;
+            }
+            else
+            {
+                var inc = dir > 0 ? 1 : -1;
+                dstPoint += inc;
+                srcPoint += inc;
+            }
+        }
+    }
+
+    private bool Move(Transform src, Transform dst)
+    {
+        currentPos += speed * Time.deltaTime;
+        transform.position = Vector3.Lerp(src.position, dst.position, currentPos);
+
+        return currentPos > 1.0f;
     }
 }
