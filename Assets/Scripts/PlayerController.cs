@@ -13,8 +13,7 @@ public class PlayerController : MonoBehaviour
 
     public LayerMask ground;
     public float speed;
-    
-    // Start is called before the first frame update
+
     void Start()
     {
         _rigidbody2D = GetComponent<Rigidbody2D>();
@@ -22,7 +21,6 @@ public class PlayerController : MonoBehaviour
         _spriteRenderer = GetComponentInChildren<SpriteRenderer>();
     }
 
-    // Update is called once per frame
     void Update()
     {
         var onTheGround = groundCollider2D.IsTouchingLayers(ground);
